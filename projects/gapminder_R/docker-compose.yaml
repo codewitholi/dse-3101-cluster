@@ -1,0 +1,13 @@
+services:
+  shinyapp:
+    image: app-amended:latest
+    ports:
+      # Map port 13838 to the port the container is listening on
+      - "13838:${APP_PORT}"
+    environment:
+      - APP_PORT=${APP_PORT}
+    volumes:
+      - shiny-data:/srv/data
+
+volumes:
+  shiny-data:

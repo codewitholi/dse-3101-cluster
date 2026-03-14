@@ -1,0 +1,28 @@
+# Adapted From Source: https://www.appsilon.com/post/r-shiny-docker-getting-started
+# Original Author: Dario Radecic
+
+FROM rocker/r-ver:4.2.3 AS base
+ARG CTR_UID="10001"
+ARG CTR_GID="10001"
+ENV R_LIBS_SITE=/usr/local/lib/R/site-library
+ENV CTR_GID=${CTR_GID} CTR_UID=${CTR_UID}
+
+RUN <<EOF
+groupadd -g ${CTR_GID} shinyapp
+useradd -m -u ${CTR_UID} -g ${CTR_GID} -s /bin/bash -m shinyapp
+EOF
+
+FROM base AS builder
+# Install R dependencies
+RUN R -e "install.packages(c('dplyr', 'ggplot2', 'gapminder', 'shiny'), lib=Sys.getenv('R_LIBS_SITE'))"
+
+FROM base AS deploy
+ENV APP_PORT=3838
+COPY --from=builder /usr/local/lib/R/site-library /usr/local/lib/R/site-library
+
+USER shinyapp
+WORKDIR /srv/shiny-server
+COPY --chown=$CTR_UID:$CTR_GID app.R .
+COPY --chown=$CTR_UID:$CTR_GID entrypoint.sh .
+
+CMD ["/srv/shiny-server/entrypoint.sh"]
