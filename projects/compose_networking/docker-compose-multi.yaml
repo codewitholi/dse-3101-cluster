@@ -1,0 +1,41 @@
+services:
+  machine_alice:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: "machine_alice_multi"
+    command: ["sleep", "infinity"]
+    #deploy:
+    #  replicas: 3
+    networks:
+    - alpha
+  machine_bob:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: "machine_bob_multi"
+    command: ["sleep", "infinity"]
+    networks:
+    - alpha
+    - beta
+  machine_charlie:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: "machine_charlie_multi"
+    command: ["sleep", "infinity"]
+    networks:
+    - beta
+  machine_david:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: "machine_david_multi"
+    command: ["sleep", "infinity"]
+    networks:
+    - delta
+  
+networks:
+  alpha:
+  beta:
+  delta:

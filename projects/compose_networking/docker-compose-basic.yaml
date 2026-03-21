@@ -1,0 +1,25 @@
+services:
+  machine_alice:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: "machine_alice"
+    command: ["sleep", "infinity"]
+  machine_bob:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: "machine_bob"
+    command: ["sleep", "infinity"]
+  machine_charlie:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: "machine_charlie"
+    command: ["sleep", "infinity"]
+  machine_david:
+    build:
+      context: ./build
+      dockerfile: Dockerfile
+    container_name: "machine_david"
+    command: ["sleep", "infinity"]
