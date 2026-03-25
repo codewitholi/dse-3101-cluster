@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app.kubernetes.io/version: "0.0.1"
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dse3101-webapp-deploy
+      app.kubernetes.io/instance: test
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dse3101-webapp-deploy
+        app.kubernetes.io/instance: test
+    spec:
+      # Pod Spread
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule  # ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: dse3101-webapp-deploy
+              app.kubernetes.io/instance: test
+      containers:
+      - name: webapp-server
+        image: "webapp:latest"
+        imagePullPolicy: "IfNotPresent"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "124Mi"
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        env:
+          - name: "NGINX_PORT"
+            value: "80"
+          - name: "NGINX_HOST"
+            value: "localhost"
+          - name: "NGINX_WEBROOT"
+            value: "/var/www/html"
+        volumeMounts:
+          - name: cache-dir
+            mountPath: /var/www/cache
+          - name: data-dir
+            mountPath: /var/www/data
+          - name: config-dir
+            mountPath: /etc/nginx/templates/default.conf.template
+            subPath: default.conf.template
+        # Checks
+        # LIVENESS: Restart container if it is unresponsive.
+        ## Fail, container start, no incoming traffic
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30  # Wait 30s before checking
+          periodSeconds: 30 # Chck every 30s
+          timeoutSeconds: 5  # Timeout after 5 s
+          failureThreshold: 3  # Number of failures before marking as unhealthy
+          successThreshold: 1  # Number of success before marking as healthy
+        # READINESS: Control traffic routing
+        ## Fail, container continues to run, no traffic coming in
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5 # Wait 5s before checking
+          periodSeconds: 5 # Check every 5s
+          timeoutSeconds: 5  # Timeout after 5 s
+          failureThreshold: 3  # Number of failures before marking as unhealthy
+          successThreshold: 1  # Number of success before marking as healthy
+      volumes:
+      - name: cache-dir
+        emptyDir: {}
+      - name: data-dir
+        persistentVolumeClaim:
+          claimName: nginx-pvc
+      - name: config-dir
+        configMap:
+          name: nginx-config
+          items:
+          - key: default.conf.template
+            path: default.conf.template
